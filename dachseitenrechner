@@ -1,0 +1,33 @@
+import math
+
+# --- PARAMETER (Die festen Daten) ---
+deckbreite_3_pfannen = 0.90   # in Metern
+deckhoehe_3_pfannen  = 0.96  # in Metern
+
+anzahl_pfannen_laenge = 22  # Anzahl Pfannen lang
+anzahl_pfannen_breite = 18   # Anzhal Pfannen hoch
+
+# --- Die Berechnung ---
+# Einzelmaß berechnen
+einzelbreite = deckbreite_3_pfannen / 3
+einzelhoehe  = deckhoehe_3_pfannen / 3
+
+# Gesamtdach berechnen
+dachlaenge = einzelbreite * anzahl_pfannen_laenge
+dachbreite = einzelhoehe * anzahl_pfannen_breite
+
+# --- Das Ergebnis ---
+print(f"Die Länge des Daches beträgt: {dachlaenge:.2f} m")
+print(f"Die Breite des Daches beträgt: {dachbreite:.2f} m")
+
+# Gesamtbreite des Daches
+
+winkel_grad = 45
+
+# Python rechnet in Radians (Bogenmaß), daher die Umrechnung
+winkel_rad = math.radians(winkel_grad)
+
+# Berechnung der Gesamtbreite
+breite = 2 * (dachbreite * math.cos(winkel_rad))
+
+print(f"Die Dachbreite beträgt: {breite:.2f} Meter")
