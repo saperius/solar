@@ -1,33 +1,132 @@
-import math
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dachflächen-Rechner</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 14px; color: #1a1a1a; background: #fff; padding: 20px; }
+  h1 { font-size: 16px; font-weight: 600; color: #1a5276; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #1a5276; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  label { display: block; font-size: 12px; color: #555; margin-bottom: 5px; }
+  input, select {
+    width: 100%; padding: 8px 10px; border: 1px solid #ccc;
+    border-radius: 6px; font-size: 14px; color: #1a1a1a;
+    background: #fff; outline: none; transition: border-color 0.15s;
+  }
+  input:focus, select:focus { border-color: #1a5276; }
+  .divider { border: none; border-top: 1px solid #e8e8e8; margin: 0 0 16px; }
+  .label-section { font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
+  .results { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 20px; }
+  .card { background: #f5f8fa; border-radius: 8px; padding: 12px; }
+  .card.highlight { background: #eaf3fb; border: 1.5px solid #1a5276; }
+  .card p:first-child { font-size: 11px; color: #888; margin-bottom: 5px; }
+  .card p:last-child { font-size: 18px; font-weight: 600; color: #1a1a1a; }
+  .card.highlight p:last-child { color: #1a5276; font-size: 20px; }
+  .formel { background: #f9f9f9; border-radius: 6px; padding: 12px; font-size: 12px; color: #666; line-height: 1.8; border: 1px solid #ebebeb; }
+  strong { color: #1a1a1a; }
+</style>
+</head>
+<body>
 
-# --- PARAMETER (Die festen Daten) ---
-deckbreite_3_pfannen = 0.90   # in Metern
-deckhoehe_3_pfannen  = 0.96  # in Metern
+<h1>Dachflächen-Rechner</h1>
 
-anzahl_pfannen_laenge = 22  # Anzahl Pfannen lang
-anzahl_pfannen_breite = 18   # Anzhal Pfannen hoch
+<div class="grid">
+  <div>
+    <label>Deckbreite (3 Pfannen) — m</label>
+    <input id="deckbreite" type="number" step="0.01" value="0.90" oninput="calc()">
+  </div>
+  <div>
+    <label>Deckhöhe (3 Pfannen) — m</label>
+    <input id="deckhoehe" type="number" step="0.01" value="0.96" oninput="calc()">
+  </div>
+  <div>
+    <label>Anzahl Pfannen — Länge</label>
+    <input id="anzahl_l" type="number" step="1" value="22" oninput="calc()">
+  </div>
+  <div>
+    <label>Anzahl Pfannen — Breite (Sparren)</label>
+    <input id="anzahl_b" type="number" step="1" value="18" oninput="calc()">
+  </div>
+  <div>
+    <label>Dachneigung — °</label>
+    <input id="winkel" type="number" step="1" min="0" max="89" value="45" oninput="calc()">
+  </div>
+  <div>
+    <label>Anzahl Dachseiten</label>
+    <select id="seiten" onchange="calc()">
+      <option value="1">1 Seite (Pultdach)</option>
+      <option value="2" selected>2 Seiten (Satteldach)</option>
+    </select>
+  </div>
+</div>
 
-# --- Die Berechnung ---
-# Einzelmaß berechnen
-einzelbreite = deckbreite_3_pfannen / 3
-einzelhoehe  = deckhoehe_3_pfannen / 3
+<hr class="divider">
+<p class="label-section">Ergebnis</p>
 
-# Gesamtdach berechnen
-dachlaenge = einzelbreite * anzahl_pfannen_laenge
-dachbreite = einzelhoehe * anzahl_pfannen_breite
+<div class="results">
+  <div class="card">
+    <p>Einzelbreite</p>
+    <p id="r_einzelbreite">—</p>
+  </div>
+  <div class="card">
+    <p>Einzelhöhe</p>
+    <p id="r_einzelhoehe">—</p>
+  </div>
+  <div class="card">
+    <p>Dachlänge</p>
+    <p id="r_laenge">—</p>
+  </div>
+  <div class="card">
+    <p>Sparrenlänge</p>
+    <p id="r_sparren">—</p>
+  </div>
+  <div class="card">
+    <p>Horizontale Dachbreite</p>
+    <p id="r_hbreite">—</p>
+  </div>
+  <div class="card highlight">
+    <p>Dachfläche gesamt</p>
+    <p id="r_flaeche">—</p>
+  </div>
+</div>
 
-# --- Das Ergebnis ---
-print(f"Die Länge des Daches beträgt: {dachlaenge:.2f} m")
-print(f"Die Breite des Daches beträgt: {dachbreite:.2f} m")
+<div class="formel" id="formel_box"></div>
 
-# Gesamtbreite des Daches
+<script>
+function calc() {
+  const db = parseFloat(document.getElementById('deckbreite').value) || 0;
+  const dh = parseFloat(document.getElementById('deckhoehe').value) || 0;
+  const al = parseInt(document.getElementById('anzahl_l').value) || 0;
+  const ab = parseInt(document.getElementById('anzahl_b').value) || 0;
+  const w  = parseFloat(document.getElementById('winkel').value) || 0;
+  const s  = parseInt(document.getElementById('seiten').value) || 2;
 
-winkel_grad = 45
+  const einzelbreite = db / 3;
+  const einzelhoehe  = dh / 3;
+  const dachl        = einzelbreite * al;
+  const sparren      = einzelhoehe  * ab;
+  const wr           = w * Math.PI / 180;
+  const hbreite      = s * sparren * Math.cos(wr);
+  const flaeche      = s * dachl * sparren;
 
-# Python rechnet in Radians (Bogenmaß), daher die Umrechnung
-winkel_rad = math.radians(winkel_grad)
+  document.getElementById('r_einzelbreite').textContent = einzelbreite.toFixed(3) + ' m';
+  document.getElementById('r_einzelhoehe').textContent  = einzelhoehe.toFixed(3)  + ' m';
+  document.getElementById('r_laenge').textContent       = dachl.toFixed(2)  + ' m';
+  document.getElementById('r_sparren').textContent      = sparren.toFixed(2) + ' m';
+  document.getElementById('r_hbreite').textContent      = hbreite.toFixed(2) + ' m';
+  document.getElementById('r_flaeche').textContent      = flaeche.toFixed(2) + ' m²';
 
-# Berechnung der Gesamtbreite
-breite = 2 * (dachbreite * math.cos(winkel_rad))
-
-print(f"Die Dachbreite beträgt: {breite:.2f} Meter")
+  document.getElementById('formel_box').innerHTML =
+    `Einzelbreite = ${db} / 3 = <strong>${einzelbreite.toFixed(3)} m</strong> &nbsp;·&nbsp; ` +
+    `Einzelhöhe = ${dh} / 3 = <strong>${einzelhoehe.toFixed(3)} m</strong><br>` +
+    `Dachlänge = ${einzelbreite.toFixed(3)} × ${al} = <strong>${dachl.toFixed(2)} m</strong> &nbsp;·&nbsp; ` +
+    `Sparrenlänge = ${einzelhoehe.toFixed(3)} × ${ab} = <strong>${sparren.toFixed(2)} m</strong><br>` +
+    `Horizontale Breite = ${s} × ${sparren.toFixed(2)} × cos(${w}°) = <strong>${hbreite.toFixed(2)} m</strong><br>` +
+    `Dachfläche = ${s} × ${dachl.toFixed(2)} × ${sparren.toFixed(2)} = <strong>${flaeche.toFixed(2)} m²</strong>`;
+}
+calc();
+</script>
+</body>
+</html>
